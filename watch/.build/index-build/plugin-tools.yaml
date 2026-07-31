@@ -1,0 +1,47 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "Haptic-arm64-apple-macosx-debug.module": ["<Haptic-arm64-apple-macosx-debug.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<Haptic-arm64-apple-macosx-debug.module>"]
+  "test": ["<Haptic-arm64-apple-macosx-debug.module>"]
+default: "main"
+nodes:
+  "/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Haptic.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/HapticApp.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Managers/AgentSessionManager.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Managers/ConversationStore.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Models/AppSettings.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Models/Message.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Views/ContentView.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Views/MessageListView.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Views/SettingsView.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Views/VoiceControlView.swift"]
+    outputs: ["/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Haptic.build/sources"]
+    description: "Write auxiliary file /Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Haptic.build/sources"
+
+  "/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Library/Developer/CommandLineTools/usr/bin/swiftc"]
+    outputs: ["/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt"
+
+  "<Haptic-arm64-apple-macosx-debug.module>":
+    tool: phony
+    inputs: ["/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Modules/Haptic.swiftmodule"]
+    outputs: ["<Haptic-arm64-apple-macosx-debug.module>"]
+
+  "C.Haptic-arm64-apple-macosx-debug.module":
+    tool: shell
+    inputs: ["/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/HapticApp.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Managers/AgentSessionManager.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Managers/ConversationStore.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Models/AppSettings.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Models/Message.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Views/ContentView.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Views/MessageListView.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Views/SettingsView.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/Views/VoiceControlView.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/swift-version--1AB21518FC5DEDBE.txt","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Haptic.build/sources"]
+    outputs: ["/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Modules/Haptic.swiftmodule"]
+    description: "Compiling Swift Module 'Haptic' (9 sources)"
+    args: ["/Library/Developer/CommandLineTools/usr/bin/swiftc","-module-name","Haptic","-emit-dependencies","-emit-module","-emit-module-path","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Modules/Haptic.swiftmodule","-output-file-map","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Haptic.build/output-file-map.json","-incremental","@/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Haptic.build/sources","-I","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx10.13","-incremental","-enable-batch-mode","-serialize-diagnostics","-Onone","-enable-testing","-j18","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/.build/index-build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-Xfrontend","-entry-point-function-name","-Xfrontend","Haptic_main","-swift-version","5","-Xfrontend","-experimental-lazy-typecheck","-Xfrontend","-experimental-skip-all-function-bodies","-Xfrontend","-experimental-allow-module-with-compiler-errors","-Xfrontend","-empty-abi-descriptor","-I","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-L","/Library/Developer/CommandLineTools/Library/Developer/Frameworks","-plugin-path","/Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing","-sdk","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-g","-Xcc","-isysroot","-Xcc","/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk","-Xcc","-fPIC","-Xcc","-g","-package-name","watch"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Haptic/","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Package.swift","/Users/maximilianarnold/emdash/worktrees/Haptic/emdash/rework-for-apple-watch-2szwq/watch/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+

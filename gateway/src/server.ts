@@ -9,6 +9,7 @@ import { runTurn, runTurnStreaming, queueContext, drainContext } from "./turn.js
 import { listTasks } from "./tasks.js";
 import { registerSocket, notifyUser } from "./notify.js";
 import { registerConnectRoutes } from "./connect.js";
+import { searchPerplexity } from "./research.js";
 
 initStore(config.storePath);
 
@@ -52,6 +53,30 @@ function userFromRequest(req: express.Request, explicitToken?: string): string |
 // ---------- app connections (OAuth -> vault) ----------
 
 registerConnectRoutes(app, userFromRequest);
+
+// ---------- web research (for agent context) ----------
+
+app.get("/research", async (req, res) => {
+  const userId = userFromRequest(req);
+  if (!userId) {
+    res.status(401).json({ error: { message: "invalid or missing gateway token" } });
+    return;
+  }
+
+  const query = req.query.q as string | undefined;
+  if (!query) {
+    res.status(400).json({ error: { message: "missing query parameter 'q'" } });
+    return;
+  }
+
+  try {
+    const result = await searchPerplexity(query);
+    res.json(result);
+  } catch (err) {
+    console.error("[research] failed:", err);
+    res.status(502).json({ error: { message: "research backend error" } });
+  }
+});
 
 // ---------- HTTP: the app's existing protocol ----------
 
