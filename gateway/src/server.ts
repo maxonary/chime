@@ -9,7 +9,7 @@ import { runTurn, runTurnStreaming, queueContext, drainContext } from "./turn.js
 import { listTasks } from "./tasks.js";
 import { registerSocket, notifyUser } from "./notify.js";
 import { registerConnectRoutes } from "./connect.js";
-import { searchPerplexity } from "./research.js";
+import { searchBing } from "./research.js";
 
 initStore(config.storePath);
 
@@ -70,7 +70,7 @@ app.get("/research", async (req, res) => {
   }
 
   try {
-    const result = await searchPerplexity(query);
+    const result = await searchBing(query);
     res.json(result);
   } catch (err) {
     console.error("[research] failed:", err);
