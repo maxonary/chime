@@ -47,8 +47,8 @@ class AgentSessionManager: ObservableObject {
   func stopListening() {
     isListening = false
     listeningTask?.cancel()
-    DispatchQueue.main.async {
-      self.closeWebSocket()
+    Task { @MainActor in
+      closeWebSocket()
     }
   }
 
@@ -117,7 +117,7 @@ class AgentSessionManager: ObservableObject {
 
       case "response.text.done":
         if let text = json["text"] as? String {
-          DispatchQueue.main.async {
+          Task { @MainActor in
             self.currentResponse = text
             let assistantMessage = Message(role: .assistant, content: text)
             if let conv = self.conversationStore.currentConversation {
@@ -146,7 +146,7 @@ class AgentSessionManager: ObservableObject {
       audioEngine.prepare()
     } catch {
       self.error = "Failed to start audio capture"
-      DispatchQueue.main.async {
+      Task { @MainActor in
         self.stopListening()
       }
     }
