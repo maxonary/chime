@@ -25,7 +25,6 @@ struct SettingsView: View {
             set: { settings.gatewayURL = URL(string: $0) ?? settings.gatewayURL }
           ))
           .font(.caption2)
-          .textFieldStyle(.roundedBorder)
         }
 
         VStack(alignment: .leading, spacing: 8) {
@@ -33,7 +32,6 @@ struct SettingsView: View {
             .font(.caption.bold())
           SecureField("Token", text: $settings.userToken)
             .font(.caption2)
-            .textFieldStyle(.roundedBorder)
         }
 
         VStack(alignment: .leading, spacing: 8) {
