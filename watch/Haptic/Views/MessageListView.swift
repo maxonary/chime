@@ -26,7 +26,7 @@ struct MessageListView: View {
                 }
               }
               .padding(8)
-              .background(message.role == .user ? Color.blue : Color(.systemGray5))
+              .background(message.role == .user ? Color.blue : Color.gray)
               .cornerRadius(8)
 
               if message.role == .assistant {
