@@ -11,7 +11,6 @@ struct VoiceControlView: View {
         HStack(spacing: 8) {
           TextField("Message...", text: $textInput)
             .font(.caption)
-            .textFieldStyle(.roundedBorder)
             .onChange(of: textInput) { _, newValue in
               isSendingEnabled = !newValue.trimmingCharacters(in: .whitespaces).isEmpty
             }
