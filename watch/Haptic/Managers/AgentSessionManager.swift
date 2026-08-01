@@ -20,7 +20,7 @@ class AgentSessionManager: NSObject, ObservableObject {
   func sendMessage(_ text: String) {
     guard !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
     guard let conversation = conversationStore.currentConversation else {
-      let newConv = conversationStore.createConversation()
+      _ = conversationStore.createConversation()
       sendMessage(text)
       return
     }
