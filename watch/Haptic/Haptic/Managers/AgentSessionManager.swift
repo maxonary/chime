@@ -24,7 +24,7 @@ class AgentSessionManager: ObservableObject {
   private func setupAudio() {
     let audioSession = AVAudioSession.sharedInstance()
     do {
-      try audioSession.setCategory(.playAndRecord, mode: .default, options: [.duckOthers, .defaultToSpeaker])
+      try audioSession.setCategory(.playAndRecord, mode: .default, options: [.duckOthers])
       try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
 
       let mainMixer = audioEngine.mainMixerNode
@@ -47,7 +47,9 @@ class AgentSessionManager: ObservableObject {
   func stopListening() {
     isListening = false
     listeningTask?.cancel()
-    closeWebSocket()
+    DispatchQueue.main.async {
+      self.closeWebSocket()
+    }
   }
 
   private func connectToRealtime() async {
@@ -132,10 +134,7 @@ class AgentSessionManager: ObservableObject {
 
   private func captureAndSendAudio() async {
     let inputNode = audioEngine.inputNode
-    guard let format = inputNode.outputFormat(forBus: 0) else {
-      self.error = "Cannot get audio format"
-      return
-    }
+    let format = inputNode.outputFormat(forBus: 0)
 
     do {
       try audioEngine.start()
@@ -147,7 +146,9 @@ class AgentSessionManager: ObservableObject {
       audioEngine.prepare()
     } catch {
       self.error = "Failed to start audio capture"
-      stopListening()
+      DispatchQueue.main.async {
+        self.stopListening()
+      }
     }
   }
 
@@ -179,7 +180,10 @@ class AgentSessionManager: ObservableObject {
     guard let audioData = Data(base64Encoded: base64String) else { return }
 
     do {
-      let audioFile = try AVAudioFile(forReading: audioData as NSURL as URL)
+      let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("audio_\(UUID().uuidString).wav")
+      try audioData.write(to: tempURL)
+
+      let audioFile = try AVAudioFile(forReading: tempURL)
       if !audioPlayer.engine!.isRunning {
         try audioPlayer.engine?.start()
       }
@@ -188,6 +192,8 @@ class AgentSessionManager: ObservableObject {
       if !audioPlayer.isPlaying {
         audioPlayer.play()
       }
+
+      try FileManager.default.removeItem(at: tempURL)
     } catch {
       self.error = "Failed to play audio"
     }
