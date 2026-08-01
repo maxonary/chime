@@ -1,5 +1,4 @@
 import Foundation
-import AVFoundation
 
 @MainActor
 class AgentSessionManager: NSObject, ObservableObject {
@@ -9,7 +8,6 @@ class AgentSessionManager: NSObject, ObservableObject {
   @Published var error: String?
   @Published var conversationStore: ConversationStore
 
-  private var audioEngine: AVAudioEngine?
   private let settings = AppSettings.load()
   private var sessionTask: URLSessionWebSocketTask?
   private var listeningTask: Task<Void, Never>?
@@ -17,23 +15,13 @@ class AgentSessionManager: NSObject, ObservableObject {
   override init() {
     conversationStore = ConversationStore()
     super.init()
-    setupAudio()
-  }
-
-  private func setupAudio() {
-    let audioSession = AVAudioSession.sharedInstance()
-    do {
-      try audioSession.setCategory(.playAndRecord, mode: .default, options: [.duckOthers, .defaultToSpeaker])
-      try audioSession.setActive(true)
-    } catch {
-      self.error = "Audio setup failed: \(error.localizedDescription)"
-    }
   }
 
   func sendMessage(_ text: String) {
     guard !text.trimmingCharacters(in: .whitespaces).isEmpty else { return }
     guard let conversation = conversationStore.currentConversation else {
-      conversationStore.createConversation()
+      let newConv = conversationStore.createConversation()
+      sendMessage(text)
       return
     }
 
@@ -75,8 +63,6 @@ class AgentSessionManager: NSObject, ObservableObject {
       let assistantMessage = Message(role: .assistant, content: text)
       conversationStore.saveMessage(assistantMessage, to: conversation.id)
       currentResponse = text
-
-      WKInterfaceDevice.current().play(.notification)
     } catch {
       self.error = "Error: \(error.localizedDescription)"
     }

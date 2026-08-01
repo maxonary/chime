@@ -7,7 +7,7 @@ struct MessageListView: View {
     ScrollViewReader { proxy in
       ScrollView {
         VStack(alignment: .leading, spacing: 8) {
-          ForEach(messages.suffix(10)) { message in
+          ForEach(Array(messages.suffix(10)), id: \.id) { message in
             HStack(alignment: .top, spacing: 8) {
               if message.role == .user {
                 Spacer()
