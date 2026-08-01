@@ -40,7 +40,7 @@ struct VoiceControlView: View {
           }
         }
         .padding(8)
-        .background(Color(.systemGray6))
+        .background(Color.gray.opacity(0.3))
         .cornerRadius(8)
       }
 
@@ -62,7 +62,7 @@ struct VoiceControlView: View {
       }
     }
     .padding(12)
-    .background(Color(.systemGray6).opacity(0.3))
+    .background(Color.gray.opacity(0.2))
   }
 
   private func send() {
