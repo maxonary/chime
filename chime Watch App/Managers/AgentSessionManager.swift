@@ -51,27 +51,28 @@ class AgentSessionManager: ObservableObject {
   }
 
   private func connectToRealtime() async {
-    guard let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] else {
-      self.error = "OpenAI API key not configured"
+    let wsScheme = settings.gatewayURL.scheme == "https" ? "wss" : "ws"
+    guard var components = URLComponents(url: settings.gatewayURL, resolvingAgainstBaseURL: true) else {
+      self.error = "Invalid gateway URL"
       return
     }
+    components.scheme = wsScheme
+    components.path = "/v1/realtime"
 
-    let model = "gpt-4o-realtime-preview-2024-12-17"
-    let urlString = "wss://api.openai.com/v1/realtime?model=\(model)"
-    guard let url = URL(string: urlString) else {
-      self.error = "Invalid WebSocket URL"
+    guard let url = components.url else {
+      self.error = "Cannot construct WebSocket URL"
       return
     }
 
     var request = URLRequest(url: url)
-    request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-    request.setValue("openai-beta", forHTTPHeaderField: "openai-beta")
+    request.setValue("Bearer \(settings.userToken)", forHTTPHeaderField: "Authorization")
 
     webSocketTask = URLSession.shared.webSocketTask(with: request)
     webSocketTask?.resume()
 
-    await receiveMessages()
-    await captureAndSendAudio()
+    async let receiveTask = receiveMessages()
+    async let captureTask = captureAndSendAudio()
+    _ = await (receiveTask, captureTask)
   }
 
   private func receiveMessages() async {
