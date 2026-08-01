@@ -1,380 +1,255 @@
-# VisionClaw
+# Haptic — Apple Watch Voice Agent
 
-![VisionClaw](assets/teaserimage.png)
+A lightweight voice assistant for Apple Watch Series 8+ that connects to an AI agent with web research capability.
 
-A real-time AI assistant for Meta Ray-Ban smart glasses. See what you see, hear what you say, and take actions on your behalf -- all through voice.
+## Overview
 
-![Cover](assets/cover.png)
+Chat with Claude via your Apple Watch. The agent has full access to the web via Perplexity, so it can answer questions about current events, look up prices, research topics, and more—with citations.
 
-Built on [Meta Wearables DAT SDK](https://github.com/facebook/meta-wearables-dat-ios) (iOS) / [DAT Android SDK](https://github.com/nichochar/openclaw) (Android) + [Gemini Live API](https://ai.google.dev/gemini-api/docs/live) + [OpenClaw](https://github.com/nichochar/openclaw) (optional).
-
-**Supported platforms:** iOS (iPhone) and Android (Pixel, Samsung, etc.)
-
-## What It Does
-
-Put on your glasses, tap the AI button, and talk:
-
-- **"What am I looking at?"** -- Gemini sees through your glasses camera and describes the scene
-- **"Add milk to my shopping list"** -- delegates to OpenClaw, which adds it via your connected apps
-- **"Send a message to John saying I'll be late"** -- routes through OpenClaw to WhatsApp/Telegram/iMessage
-- **"Search for the best coffee shops nearby"** -- web search via OpenClaw, results spoken back
-
-The glasses camera streams at ~1fps to Gemini for visual context, while audio flows bidirectionally in real-time.
-
-## How It Works
-
-![How It Works](assets/how.png)
-
-```
-Meta Ray-Ban Glasses (or phone camera)
-       |
-       | video frames + mic audio
-       v
-iOS / Android App (this project)
-       |
-       | JPEG frames (~1fps) + PCM audio (16kHz)
-       v
-Gemini Live API (WebSocket)
-       |
-       |-- Audio response (PCM 24kHz) --> App --> Speaker
-       |-- Tool calls (execute) -------> App --> OpenClaw Gateway
-       |                                              |
-       |                                              v
-       |                                      56+ skills: web search,
-       |                                      messaging, smart home,
-       |                                      notes, reminders, etc.
-       |                                              |
-       |<---- Tool response (text) <----- App <-------+
-       |
-       v
-  Gemini speaks the result
-```
-
-**Key pieces:**
-- **Gemini Live** -- real-time voice + vision AI over WebSocket (native audio, not STT-first)
-- **OpenClaw** (optional) -- local gateway that gives Gemini access to 56+ tools and all your connected apps
-- **Phone mode** -- test the full pipeline using your phone camera instead of glasses
-- **WebRTC streaming** -- share your glasses POV live to a browser viewer
+**Built on:** SwiftUI (watchOS) + Node.js Gateway + Anthropic Claude + Perplexity (web research)
 
 ---
 
-## Quick Start (iOS)
+## Quick Start
 
-### 1. Clone and open
+### Prerequisites
 
-```bash
-git clone https://github.com/sseanliu/VisionClaw.git
-cd VisionClaw/samples/CameraAccess
-open CameraAccess.xcodeproj
-```
+- Apple Watch Series 8 or later (or watchOS 10+ simulator)
+- Node.js 20+
+- Anthropic API key ([get one free](https://console.anthropic.com/))
+- Perplexity API key ([get one here](https://www.perplexity.ai/))
+- LiveKit instance (for agent backend)
 
-### 2. Add your secrets
-
-Copy the example file and fill in your values:
+### 1. Start the gateway
 
 ```bash
-cp CameraAccess/Secrets.swift.example CameraAccess/Secrets.swift
+cd gateway
+
+# Create .env with your keys
+cat > .env <<EOF
+PORT=8788
+GATEWAY_TOKENS="watch-token:myuserId"
+ANTHROPIC_API_KEY=sk-ant-...
+PERPLEXITY_API_KEY=pplx-...
+LIVEKIT_URL=ws://localhost:7880
+LIVEKIT_API_KEY=your-key
+LIVEKIT_API_SECRET=your-secret
+AGENT_MODEL=claude-opus-5
+AGENT_EFFORT=medium
+EOF
+
+npm install
+npm start
 ```
 
-Edit `Secrets.swift` with your [Gemini API key](https://aistudio.google.com/apikey) (required) and optional OpenClaw/WebRTC config.
+Gateway runs at `http://localhost:8788`.
 
-### 3. Build and run
+### 2. Build and run the watch app
 
-Select your iPhone as the target device and hit Run (Cmd+R).
+**Option A: Xcode (recommended)**
+```bash
+cd watch
+# Open in Xcode or use: xcode-select -p
+# Then: Build and Run on Apple Watch simulator or device
+```
 
-### 4. Try it out
+**Option B: Swift Package Manager**
+```bash
+cd watch
+swift build
+```
 
-**Without glasses (iPhone mode):**
-1. Tap **"Start on iPhone"** -- uses your iPhone's back camera
-2. Tap the **AI button** to start a Gemini Live session
-3. Talk to the AI -- it can see through your iPhone camera
+### 3. Configure the watch app
 
-**With Meta Ray-Ban glasses:**
+1. Tap the **Settings** (gear) icon
+2. Set:
+   - **Gateway URL**: `http://localhost:8788` (for local) or your server URL (for remote)
+   - **Auth Token**: `watch-token` (from GATEWAY_TOKENS)
+   - **Model**: Claude Opus 5 (or Sonnet 5)
+   - **Web Research**: Toggle ON
+3. Return to chat
 
-First, enable Developer Mode in the Meta AI app:
+### 4. Start chatting
 
-1. Open the **Meta AI** app on your iPhone
-2. Go to **Settings** (gear icon, bottom left)
-3. Tap **App Info**
-4. Tap the **App version** number **5 times** -- this unlocks Developer Mode
-5. Go back to Settings -- you'll now see a **Developer Mode** toggle. Turn it on.
+Type a message or tap the mic button to start a conversation. The agent can:
 
-![How to enable Developer Mode](assets/dev_mode.png)
-
-Then in VisionClaw:
-1. Tap **"Start Streaming"** in the app
-2. Tap the **AI button** for voice + vision conversation
+- Answer questions with web research (auto-cited)
+- Remember conversation context
+- Handle multi-turn conversations
 
 ---
 
-## Quick Start (Android)
+## Features
 
-### 1. Clone and open
+### Text Chat
+Type messages and tap send. Responses stream in real-time.
 
-```bash
-git clone https://github.com/sseanliu/VisionClaw.git
-```
+### Web Research
+When the agent needs current information (news, prices, recent events), it automatically:
+1. Searches via Perplexity
+2. Retrieves citations and snippets
+3. Cites sources naturally in its response
 
-Open `samples/CameraAccessAndroid/` in Android Studio.
-
-### 2. Configure GitHub Packages (DAT SDK)
-
-The Meta DAT Android SDK is distributed via GitHub Packages. You need a GitHub Personal Access Token with `read:packages` scope.
-
-1. Go to [GitHub > Settings > Developer Settings > Personal Access Tokens](https://github.com/settings/tokens) and create a **classic** token with `read:packages` scope
-2. In `samples/CameraAccessAndroid/local.properties`, add:
-
-```properties
-github_token=YOUR_GITHUB_TOKEN
-```
-
-> **Tip:** If you have the `gh` CLI installed, you can run `gh auth token` to get a valid token. Make sure it has `read:packages` scope -- if not, run `gh auth refresh -s read:packages`.
+Example:
+> **You**: "What's the latest ChatGPT news?"
 >
-> **Note:** GitHub Packages requires authentication even for public repositories. The 401 error means your token is missing or invalid.
+> **Agent**: "According to OpenAI's blog, GPT-4 Turbo was released in April 2024 with 128K token context... [continues with citations]"
 
-### 3. Add your secrets
+### Message History
+All conversations are saved locally on the watch in JSON format. Switch between chat threads in the UI.
 
-```bash
-cd samples/CameraAccessAndroid/app/src/main/java/com/meta/wearable/dat/externalsampleapps/cameraaccess/
-cp Secrets.kt.example Secrets.kt
-```
-
-Edit `Secrets.kt` with your [Gemini API key](https://aistudio.google.com/apikey) (required) and optional OpenClaw/WebRTC config.
-
-### 4. Build and run
-
-1. Let Gradle sync in Android Studio (it will download the DAT SDK from GitHub Packages)
-2. Select your Android phone as the target device
-3. Click Run (Shift+F10)
-
-> **Wireless debugging:** You can also install via ADB wirelessly. Enable **Wireless debugging** in your phone's Developer Options, then pair with `adb pair <ip>:<port>`.
-
-### 5. Try it out
-
-**Without glasses (Phone mode):**
-1. Tap **"Start on Phone"** -- uses your phone's back camera
-2. Tap the **AI button** (sparkle icon) to start a Gemini Live session
-3. Talk to the AI -- it can see through your phone camera
-
-**With Meta Ray-Ban glasses:**
-
-Enable Developer Mode in the Meta AI app (same steps as iOS above), then:
-1. Tap **"Start Streaming"** in the app
-2. Tap the **AI button** for voice + vision conversation
-
----
-
-## Setup: OpenClaw (Optional)
-
-OpenClaw gives Gemini the ability to take real-world actions: send messages, search the web, manage lists, control smart home devices, and more. Without it, Gemini is voice + vision only.
-
-### 1. Install and configure OpenClaw
-
-Follow the [OpenClaw setup guide](https://github.com/nichochar/openclaw). Make sure the gateway is enabled:
-
-In `~/.openclaw/openclaw.json`:
-
-```json
-{
-  "gateway": {
-    "port": 18789,
-    "bind": "lan",
-    "auth": {
-      "mode": "token",
-      "token": "your-gateway-token-here"
-    },
-    "http": {
-      "endpoints": {
-        "chatCompletions": { "enabled": true }
-      }
-    }
-  }
-}
-```
-
-Key settings:
-- `bind: "lan"` -- exposes the gateway on your local network so your phone can reach it
-- `chatCompletions.enabled: true` -- enables the `/v1/chat/completions` endpoint (off by default)
-- `auth.token` -- the token your app will use to authenticate
-
-### 2. Configure the app
-
-**iOS** -- In `Secrets.swift`:
-```swift
-static let openClawHost = "http://Your-Mac.local"
-static let openClawPort = 18789
-static let openClawGatewayToken = "your-gateway-token-here"
-```
-
-**Android** -- In `Secrets.kt`:
-```kotlin
-const val openClawHost = "http://Your-Mac.local"
-const val openClawPort = 18789
-const val openClawGatewayToken = "your-gateway-token-here"
-```
-
-To find your Mac's Bonjour hostname: **System Settings > General > Sharing** -- it's shown at the top (e.g., `Johns-MacBook-Pro.local`).
-
-> Both iOS and Android also have an in-app Settings screen where you can change these values at runtime without editing source code.
-
-### 3. Start the gateway
-
-```bash
-openclaw gateway restart
-```
-
-Verify it's running:
-
-```bash
-curl http://localhost:18789/health
-```
-
-Now when you talk to the AI, it can execute tasks through OpenClaw.
+### Agent Memory
+The agent has access to a persistent memory store via Anthropic's managed agents API. It can:
+- Recall your preferences from past conversations
+- Store important facts about you
+- Maintain context across sessions
 
 ---
 
 ## Architecture
 
-### Key Files (iOS)
+```
+Apple Watch (watchOS 10+)
+       |
+       | text messages + auth token
+       v
+   Gateway (Node.js)
+       |
+       |-- /v1/chat/completions --> Anthropic Claude
+       |                            (with memory store)
+       |
+       |-- /research endpoint  --> Perplexity API
+       |                           (for web search)
+       v
+   LiveKit Agent Worker
+       (runs Claude in agent mode)
+```
 
-All source code is in `samples/CameraAccess/CameraAccess/`:
-
-| File | Purpose |
-|------|---------|
-| `Gemini/GeminiConfig.swift` | API keys, model config, system prompt |
-| `Gemini/GeminiLiveService.swift` | WebSocket client for Gemini Live API |
-| `Gemini/AudioManager.swift` | Mic capture (PCM 16kHz) + audio playback (PCM 24kHz) |
-| `Gemini/GeminiSessionViewModel.swift` | Session lifecycle, tool call wiring, transcript state |
-| `OpenClaw/ToolCallModels.swift` | Tool declarations, data types |
-| `OpenClaw/OpenClawBridge.swift` | HTTP client for OpenClaw gateway |
-| `OpenClaw/ToolCallRouter.swift` | Routes Gemini tool calls to OpenClaw |
-| `iPhone/IPhoneCameraManager.swift` | AVCaptureSession wrapper for iPhone camera mode |
-| `WebRTC/WebRTCClient.swift` | WebRTC peer connection + SDP negotiation |
-| `WebRTC/SignalingClient.swift` | WebSocket signaling for WebRTC rooms |
-
-### Key Files (Android)
-
-All source code is in `samples/CameraAccessAndroid/app/src/main/java/.../cameraaccess/`:
-
-| File | Purpose |
-|------|---------|
-| `gemini/GeminiConfig.kt` | API keys, model config, system prompt |
-| `gemini/GeminiLiveService.kt` | OkHttp WebSocket client for Gemini Live API |
-| `gemini/AudioManager.kt` | AudioRecord (16kHz) + AudioTrack (24kHz) |
-| `gemini/GeminiSessionViewModel.kt` | Session lifecycle, tool call wiring, UI state |
-| `openclaw/ToolCallModels.kt` | Tool declarations, data classes |
-| `openclaw/OpenClawBridge.kt` | OkHttp HTTP client for OpenClaw gateway |
-| `openclaw/ToolCallRouter.kt` | Routes Gemini tool calls to OpenClaw |
-| `phone/PhoneCameraManager.kt` | CameraX wrapper for phone camera mode |
-| `webrtc/WebRTCClient.kt` | WebRTC peer connection (stream-webrtc-android) |
-| `webrtc/SignalingClient.kt` | OkHttp WebSocket signaling for WebRTC rooms |
-| `settings/SettingsManager.kt` | SharedPreferences with Secrets.kt fallback |
-
-### Audio Pipeline
-
-- **Input**: Phone mic -> AudioManager (PCM Int16, 16kHz mono, 100ms chunks) -> Gemini WebSocket
-- **Output**: Gemini WebSocket -> AudioManager playback queue -> Phone speaker
-- **iOS iPhone mode**: Uses `.voiceChat` audio session for echo cancellation + mic gating during AI speech
-- **iOS Glasses mode**: Uses `.videoChat` audio session (mic is on glasses, speaker is on phone -- no echo)
-- **Android**: Uses `VOICE_COMMUNICATION` audio source for built-in acoustic echo cancellation
-
-### Video Pipeline
-
-- **Glasses**: DAT SDK video stream (24fps) -> throttle to ~1fps -> JPEG (50% quality) -> Gemini
-- **Phone**: Camera capture (30fps) -> throttle to ~1fps -> JPEG -> Gemini
-
-### Tool Calling
-
-Gemini Live supports function calling. Both apps declare a single `execute` tool that routes everything through OpenClaw:
-
-1. User says "Add eggs to my shopping list"
-2. Gemini speaks "Sure, adding that now" (verbal acknowledgment before tool call)
-3. Gemini sends `toolCall` with `execute(task: "Add eggs to the shopping list")`
-4. `ToolCallRouter` sends HTTP POST to OpenClaw gateway
-5. OpenClaw executes the task using its 56+ connected skills
-6. Result returns to Gemini via `toolResponse`
-7. Gemini speaks the confirmation
-
-### WebRTC Live Streaming
-
-Share your glasses POV in real-time to a browser viewer with bidirectional audio and video.
-
-1. Tap the **Live** button in the app
-2. The app connects to a signaling server and gets a 6-character room code
-3. Share the code -- the viewer opens the server URL in a browser and enters it
-4. WebRTC peer connection is established (SDP + ICE via the signaling server)
-5. Media flows peer-to-peer: glasses video to browser, browser camera back to iOS PiP
-
-**Key details:**
-- **Signaling server**: Node.js + WebSocket, located at `samples/CameraAccess/server/` -- serves the browser viewer and relays SDP/ICE
-- **NAT traversal**: Google STUN servers + ExpressTURN relay (fetched from `/api/turn`)
-- **Video**: 24 fps, 2.5 Mbps max bitrate
-- **Background handling**: 60-second grace period for iOS app backgrounding -- room stays alive for reconnection
-- **Constraint**: Cannot run simultaneously with Gemini Live (audio device conflict)
-
-For full details, see [`samples/CameraAccess/CameraAccess/WebRTC/README.md`](samples/CameraAccess/CameraAccess/WebRTC/README.md).
+**Key components:**
+- **AgentSessionManager** — Handles gateway communication and audio setup
+- **ConversationStore** — Persists message history (JSON) on watch
+- **Research module** — Calls Perplexity, formats citations
+- **AppSettings** — Stores gateway URL, token, preferences
 
 ---
 
-## Requirements
+## File Structure
 
-### iOS
-- iOS 17.0+
-- Xcode 15.0+
-- Gemini API key ([get one free](https://aistudio.google.com/apikey))
-- Meta Ray-Ban glasses (optional -- use iPhone mode for testing)
-- OpenClaw on your Mac (optional -- for agentic actions)
+```
+.
+├── gateway/                   # Node.js backend
+│   ├── src/
+│   │   ├── server.ts          # Express routes + middleware
+│   │   ├── provision.ts       # Agent + session setup
+│   │   ├── turn.ts            # Agent turn execution
+│   │   ├── research.ts        # Perplexity integration
+│   │   ├── connect.ts         # OAuth / vault setup
+│   │   └── ...
+│   ├── package.json
+│   └── .env.example
+│
+└── watch/                     # watchOS app
+    ├── Haptic/
+    │   ├── HapticApp.swift
+    │   ├── Models/
+    │   │   ├── Message.swift
+    │   │   ├── AppSettings.swift
+    │   │   └── Conversation.swift
+    │   ├── Managers/
+    │   │   ├── AgentSessionManager.swift
+    │   │   └── ConversationStore.swift
+    │   └── Views/
+    │       ├── ContentView.swift
+    │       ├── MessageListView.swift
+    │       ├── VoiceControlView.swift
+    │       └── SettingsView.swift
+    └── Package.swift
+```
 
-### Android
-- Android 14+ (API 34+)
-- Android Studio Ladybug or newer
-- GitHub account with `read:packages` token (for DAT SDK)
-- Gemini API key ([get one free](https://aistudio.google.com/apikey))
-- Meta Ray-Ban glasses (optional -- use Phone mode for testing)
-- OpenClaw on your Mac (optional -- for agentic actions)
+---
+
+## Configuration
+
+### Environment Variables (Gateway)
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `PORT` | Gateway port | No (default: 8788) |
+| `GATEWAY_TOKENS` | `token:userId` pairs | Yes |
+| `ANTHROPIC_API_KEY` | Claude API key | Yes |
+| `PERPLEXITY_API_KEY` | Perplexity API key | Yes |
+| `LIVEKIT_URL` | WebSocket URL | Yes |
+| `LIVEKIT_API_KEY` | LiveKit credential | Yes |
+| `LIVEKIT_API_SECRET` | LiveKit credential | Yes |
+| `AGENT_MODEL` | `claude-opus-5` or `claude-sonnet-5` | No (default: opus-5) |
+| `AGENT_EFFORT` | `low`, `medium`, `high` | No (default: medium) |
+
+### Watch App Settings (UI)
+
+| Setting | Default | Notes |
+|---------|---------|-------|
+| Gateway URL | `http://localhost:8788` | Must be reachable from watch |
+| Auth Token | (empty) | From `GATEWAY_TOKENS` |
+| Model | Claude Opus 5 | Agent model to use |
+| Web Research | On | Toggle auto-research |
 
 ---
 
 ## Troubleshooting
 
-### General
+### Watch can't connect to gateway
 
-**Gemini doesn't hear me** -- Check that microphone permission is granted. The app uses aggressive voice activity detection -- speak clearly and at normal volume.
+**Check 1: Reachability**
+- If local: `curl http://localhost:8788/health`
+- If remote: Ensure gateway URL is publicly accessible or on same network
 
-**OpenClaw connection timeout** -- Make sure your phone and Mac are on the same Wi-Fi network, the gateway is running (`openclaw gateway restart`), and the hostname matches your Mac's Bonjour name.
+**Check 2: Token**
+- Verify token in watch Settings matches `GATEWAY_TOKENS` on gateway
+- Restart the watch app and try again
 
-**OpenClaw opens duplicate browser tabs** -- This is a known upstream issue in OpenClaw's CDP (Chrome DevTools Protocol) connection management ([#13851](https://github.com/nichochar/openclaw/issues/13851), [#12317](https://github.com/nichochar/openclaw/issues/12317)). Using `profile: "openclaw"` (managed Chrome) instead of the default extension relay may improve stability.
+**Check 3: Gateway logs**
+- Look for `[chat]` errors: `invalid or missing gateway token`, `provisioning failed`, etc.
 
-### iOS-specific
+### No web research results
 
-**"Gemini API key not configured"** -- Add your API key in Secrets.swift or in the in-app Settings.
+**Check 1: Perplexity API key**
+- Verify `PERPLEXITY_API_KEY` is set and valid
+- Check gateway logs: `[research] Search failed: ...`
 
-**Echo/feedback in iPhone mode** -- The app mutes the mic while the AI is speaking. If you still hear echo, try turning down the volume.
+**Check 2: Rate limit**
+- Perplexity may rate-limit on free tier; wait a moment and retry
+- Check account balance if using paid tier
 
-### Android-specific
+### Messages not saving
 
-**Gradle sync fails with 401 Unauthorized** -- Your GitHub token is missing or doesn't have `read:packages` scope. Check `local.properties` for `gpr.user` and `gpr.token`. Generate a new token at [github.com/settings/tokens](https://github.com/settings/tokens).
+**Check 1: Storage permissions**
+- watchOS 10+ requires app storage permission
+- Delete and reinstall app if needed
 
-**Gemini WebSocket times out** -- The Gemini Live API sends binary WebSocket frames. If you're building a custom client, make sure to handle both text and binary frame types.
+**Check 2: Disk space**
+- Watch storage is limited; old conversations may auto-delete
 
-**Audio not working** -- Ensure `RECORD_AUDIO` permission is granted. On Android 13+, you may need to grant this permission manually in Settings > Apps.
+---
 
-**Phone camera not starting** -- Ensure `CAMERA` permission is granted. CameraX requires both the permission and a valid lifecycle.
+## Development Roadmap
 
-For DAT SDK issues, see the [developer documentation](https://wearables.developer.meta.com/docs/develop/) or the [discussions forum](https://github.com/facebook/meta-wearables-dat-ios/discussions).
+### Completed ✅
+- Phase 1: Stripped old iOS/Android code
+- Phase 2: watchOS app with text chat
+- Phase 3: Perplexity web research integration
+- Agent memory (via Anthropic API)
 
-## Citation
+### In Progress 🔄
+- Phase 4: Voice recording + speech-to-text
 
-If you use VisionClaw in your research, please cite our paper:
+### Coming Soon 📋
+- Voice output / speech synthesis
+- Conversation history UI (browse past chats)
+- iPhone handoff (start on watch, continue on phone)
+- Offline message caching
+- Richer haptic feedback
 
-```bibtex
-@article{liu2026visionclaw,
-  title={VisionClaw: Always-On AI Agents through Smart Glasses},
-  author={Liu, Xiaoan and Lee, DaeHo and Gonzalez, Eric J and Gonzalez-Franco, Mar and Suzuki, Ryo},
-  journal={arXiv preprint arXiv:2604.03486},
-  year={2026}
-}
-```
+---
 
 ## License
 
