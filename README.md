@@ -4,9 +4,9 @@ A lightweight voice assistant for Apple Watch Series 8+ that connects to an AI a
 
 ## Overview
 
-Chat with Claude via your Apple Watch. The agent has full access to the web via Bing Search, so it can answer questions about current events, look up prices, research topics, and more—with citations.
+Chat with Claude via your Apple Watch. The agent has full access to the web via Perplexity, so it can answer questions about current events, look up prices, research topics, and more—with citations.
 
-**Built on:** SwiftUI (watchOS) + Node.js Gateway + Anthropic Claude + Bing Search (web research)
+**Built on:** SwiftUI (watchOS) + Node.js Gateway + Anthropic Claude + Perplexity (web research)
 
 ---
 
@@ -30,7 +30,7 @@ cat > .env <<EOF
 PORT=8788
 GATEWAY_TOKENS="watch-token:myuserId"
 ANTHROPIC_API_KEY=sk-ant-...
-BING_SEARCH_KEY=your-bing-search-key
+PERPLEXITY_API_KEY=pplx-...
 LIVEKIT_URL=ws://localhost:7880
 LIVEKIT_API_KEY=your-key
 LIVEKIT_API_SECRET=your-secret
@@ -86,7 +86,7 @@ Type messages and tap send. Responses stream in real-time.
 
 ### Web Research
 When the agent needs current information (news, prices, recent events), it automatically:
-1. Searches via Bing Search API (1,000 queries/month free)
+1. Searches via Perplexity
 2. Retrieves citations and snippets
 3. Cites sources naturally in its response
 
@@ -177,7 +177,7 @@ Apple Watch (watchOS 10+)
 | `PORT` | Gateway port | No (default: 8788) |
 | `GATEWAY_TOKENS` | `token:userId` pairs | Yes |
 | `ANTHROPIC_API_KEY` | Claude API key | Yes |
-| `BING_SEARCH_KEY` | Bing Search API key | Yes |
+| `PERPLEXITY_API_KEY` | Perplexity API key | Yes |
 | `LIVEKIT_URL` | WebSocket URL | Yes |
 | `LIVEKIT_API_KEY` | LiveKit credential | Yes |
 | `LIVEKIT_API_SECRET` | LiveKit credential | Yes |
@@ -212,14 +212,13 @@ Apple Watch (watchOS 10+)
 
 ### No web research results
 
-**Check 1: Bing Search API key**
-- Verify `BING_SEARCH_KEY` is set and valid
-- Check gateway logs: `[research] Bing search failed: ...`
-- Ensure the API resource in Azure is active (free tier doesn't auto-suspend)
+**Check 1: Perplexity API key**
+- Verify `PERPLEXITY_API_KEY` is set and valid
+- Check gateway logs: `[research] Search failed: ...`
 
-**Check 2: Query format**
-- Bing Search is case-sensitive; try rewording
-- Very long queries may timeout; keep under 100 chars
+**Check 2: Rate limit**
+- Perplexity may rate-limit on free tier; wait a moment and retry
+- Check account balance if using paid tier
 
 ### Messages not saving
 
@@ -237,7 +236,7 @@ Apple Watch (watchOS 10+)
 ### Completed ✅
 - Phase 1: Stripped old iOS/Android code
 - Phase 2: watchOS app with text chat
-- Phase 3: Bing Search web research integration
+- Phase 3: Perplexity web research integration
 - Agent memory (via Anthropic API)
 
 ### In Progress 🔄
