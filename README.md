@@ -1,4 +1,4 @@
-# Haptic — Apple Watch Voice Agent
+# Chime 🧿 Apple Watch Voice Agent
 
 A lightweight voice assistant for Apple Watch Series 8+ that connects to an AI agent with web research capability.
 
