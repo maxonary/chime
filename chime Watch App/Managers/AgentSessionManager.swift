@@ -1,5 +1,7 @@
 import Foundation
 import Combine
+import Speech
+import AVFoundation
 
 @MainActor
 class AgentSessionManager: ObservableObject {
@@ -12,9 +14,35 @@ class AgentSessionManager: ObservableObject {
   private let settings = AppSettings.load()
   private var sessionTask: URLSessionWebSocketTask?
   private var listeningTask: Task<Void, Never>?
+  private var speechRecognizer: SFSpeechRecognizer?
+  private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+  private var recognitionTask: SFSpeechRecognitionTask?
+  private let audioEngine = AVAudioEngine()
+  private var speechBuffer = ""
 
   init() {
     self.conversationStore = ConversationStore()
+    setupSpeech()
+  }
+
+  private func setupSpeech() {
+    speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+
+    let audioSession = AVAudioSession.sharedInstance()
+    do {
+      try audioSession.setCategory(.playAndRecord, mode: .measurement, options: [.duckOthers, .defaultToSpeaker])
+      try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+    } catch {
+      self.error = "Audio setup failed"
+    }
+
+    SFSpeechRecognizer.requestAuthorization { status in
+      if status != .authorized {
+        DispatchQueue.main.async {
+          self.error = "Speech recognition not authorized"
+        }
+      }
+    }
   }
 
   func sendMessage(_ text: String) {
@@ -69,15 +97,62 @@ class AgentSessionManager: ObservableObject {
   }
 
   func startListening() {
-    isListening = true
-    listeningTask = Task {
-      // TODO: Implement actual voice recording with speech-to-text
+    guard speechRecognizer?.isAvailable == true else {
+      self.error = "Speech recognition unavailable"
+      return
+    }
+
+    do {
+      try audioEngine.start()
+
+      recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+      guard let recognitionRequest = recognitionRequest else { return }
+
+      recognitionRequest.shouldReportPartialResults = true
+
+      isListening = true
+      speechBuffer = ""
+
+      recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { result, error in
+        DispatchQueue.main.async {
+          if let result = result {
+            self.speechBuffer = result.bestTranscription.formattedString
+            if result.isFinal {
+              self.sendMessage(self.speechBuffer)
+              self.stopListening()
+            }
+          }
+
+          if let error = error as? NSError {
+            if error.code != 216 {
+              self.error = "Speech error: \(error.localizedDescription)"
+            }
+            self.stopListening()
+          }
+        }
+      }
+
+      let inputNode = audioEngine.inputNode
+      let recordingFormat = inputNode.outputFormat(forBus: 0)
+      inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { buffer, _ in
+        self.recognitionRequest?.append(buffer)
+      }
+
+      audioEngine.prepare()
+    } catch {
+      self.error = "Failed to start recording"
+      isListening = false
     }
   }
 
   func stopListening() {
     isListening = false
-    listeningTask?.cancel()
+    audioEngine.stop()
+    audioEngine.inputNode.removeTap(onBus: 0)
+    recognitionRequest?.endAudio()
+    recognitionTask?.cancel()
+    recognitionTask = nil
+    recognitionRequest = nil
   }
 
   deinit {
