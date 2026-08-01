@@ -1,4 +1,4 @@
-# Setting Up Haptic watchOS Project in Xcode
+# Setting Up Chime watchOS Project in Xcode
 
 Since Swift Package Manager creates executables (not .app bundles), we need a proper Xcode project.
 
@@ -8,7 +8,7 @@ Since Swift Package Manager creates executables (not .app bundles), we need a pr
 2. **File** → **New** → **Project**
 3. Select **watchOS** → **App**
 4. Configure:
-   - **Product Name**: `Haptic`
+   - **Product Name**: `chime`
    - **Team**: Your Apple team
    - **Organization**: Your name/company
    - Uncheck "Include Tests"
@@ -20,19 +20,19 @@ Once the project is created in Xcode:
 
 1. Delete these default files in Xcode:
    - `ContentView.swift`
-   - `HapticApp.swift` (the default one)
+   - `chimeApp.swift` (the default one)
 
 2. Copy our Swift files from `Haptic/` directory:
-   - `HapticApp.swift` → Root
+   - `HapticApp.swift` → Root (rename to `chimeApp.swift`)
    - `Models/` → Copy folder
    - `Managers/` → Copy folder
    - `Views/` → Copy folder
 
-3. Make sure all files are added to the **Haptic** target
+3. Make sure all files are added to the **chime** target
 
 ## Build & Run
 
-- Select **Haptic** scheme (top left)
+- Select **chime** scheme (top left)
 - Select **Apple Watch** device/simulator
 - Press **Cmd+R** to build and run
 
