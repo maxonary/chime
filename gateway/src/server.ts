@@ -293,6 +293,57 @@ app.post("/context", async (req, res) => {
   res.sendStatus(204);
 });
 
+// ---------- WS: realtime API proxy (for speech-to-speech via gpt-4o-realtime) ----------
+
+const realtime = new WebSocketServer({ noServer: true });
+
+realtime.on("connection", (clientWs: WebSocket) => {
+  const openaiUrl = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17";
+  const { WebSocket: WS } = require("ws");
+  const openaiWs = new WS(openaiUrl, {
+    headers: {
+      authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "openai-beta": "realtime=v1",
+    },
+  });
+
+  openaiWs.on("open", () => {
+    console.log("[realtime] connected to OpenAI");
+  });
+
+  openaiWs.on("message", (data: string) => {
+    if (clientWs.readyState === clientWs.OPEN) {
+      clientWs.send(data);
+    }
+  });
+
+  openaiWs.on("error", (err: Error) => {
+    console.error("[realtime] OpenAI connection error:", err);
+    clientWs.close(1011, "OpenAI connection failed");
+  });
+
+  openaiWs.on("close", () => {
+    console.log("[realtime] OpenAI disconnected");
+    clientWs.close();
+  });
+
+  clientWs.on("message", (data: string) => {
+    if (openaiWs.readyState === openaiWs.OPEN) {
+      openaiWs.send(data);
+    }
+  });
+
+  clientWs.on("error", (err: Error) => {
+    console.error("[realtime] client connection error:", err);
+    openaiWs.close();
+  });
+
+  clientWs.on("close", () => {
+    console.log("[realtime] client disconnected");
+    openaiWs.close();
+  });
+});
+
 // ---------- WS: the app's event channel (protocol v3 handshake) ----------
 
 const httpServer = createServer(app);
@@ -325,6 +376,25 @@ wss.on("connection", (ws: WebSocket) => {
     ws.send(JSON.stringify({ type: "res", id: msg.id, ok: true }));
     console.log(`[ws] client connected for ${userId}`);
   });
+});
+
+// Upgrade requests to /v1/realtime to the realtime WebSocket server
+httpServer.on("upgrade", (req, socket, head) => {
+  if (req.url?.startsWith("/v1/realtime")) {
+    const userId = userFromRequest(req);
+    if (!userId) {
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+      socket.destroy();
+      return;
+    }
+    realtime.handleUpgrade(req, socket, head, (ws) => {
+      realtime.emit("connection", ws, req);
+    });
+  } else {
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit("connection", ws, req);
+    });
+  }
 });
 
 httpServer.listen(config.port, () => {
