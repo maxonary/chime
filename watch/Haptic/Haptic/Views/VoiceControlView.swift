@@ -11,9 +11,6 @@ struct VoiceControlView: View {
         HStack(spacing: 8) {
           TextField("Message...", text: $textInput)
             .font(.caption)
-            .onChange(of: textInput) { _, newValue in
-              isSendingEnabled = !newValue.trimmingCharacters(in: .whitespaces).isEmpty
-            }
 
           Button(action: send) {
             Image(systemName: "paperplane.fill")
@@ -62,6 +59,9 @@ struct VoiceControlView: View {
     }
     .padding(12)
     .background(Color.gray.opacity(0.2))
+    .onChange(of: textInput) { _, newValue in
+      isSendingEnabled = !newValue.trimmingCharacters(in: .whitespaces).isEmpty
+    }
   }
 
   private func send() {

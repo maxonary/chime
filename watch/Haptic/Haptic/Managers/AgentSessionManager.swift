@@ -72,7 +72,6 @@ class AgentSessionManager: NSObject, ObservableObject {
     isListening = true
     listeningTask = Task {
       // TODO: Implement actual voice recording with speech-to-text
-      // For now, this is a placeholder
     }
   }
 
